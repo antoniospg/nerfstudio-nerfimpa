@@ -14,7 +14,7 @@ from nerfimpa.fields.siren_field import SirenField
 from nerfstudio.cameras.rays import RayBundle
 from nerfstudio.configs.config_utils import to_immutable_dict
 from nerfstudio.fields.base_field import Field
-from nerfstudio.field_components.encodings import NeRFEncoding
+from nerfstudio.field_components.encodings import NeRFEncoding, Identity
 from nerfstudio.field_components.field_heads import FieldHeadNames
 from nerfstudio.field_components.temporal_distortions import TemporalDistortionKind
 from nerfstudio.model_components.losses import MSELoss, scale_gradients_by_distance_squared
@@ -56,12 +56,8 @@ class SirenModel(CustomVanillaModel):
         """Set the fields and modules"""
         super().populate_modules()
 
-        position_encoding = NeRFEncoding(
-            in_dim=3, num_frequencies=10, min_freq_exp=0.0, max_freq_exp=8.0, include_input=True
-        )
-        direction_encoding = NeRFEncoding(
-            in_dim=3, num_frequencies=4, min_freq_exp=0.0, max_freq_exp=4.0, include_input=True
-        )
+        position_encoding = Identity(in_dim=3)
+        direction_encoding = Identity(in_dim=3)
 
         self.field_coarse = SirenField(
             position_encoding=position_encoding,

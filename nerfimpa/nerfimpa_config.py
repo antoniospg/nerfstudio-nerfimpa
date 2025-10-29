@@ -29,15 +29,17 @@ from nerfstudio.field_components.encodings import NeRFEncoding
 custom_vanilla_nerf = MethodSpecification(
     config=TrainerConfig(
         method_name="custom-vanilla-nerf",
+        experiment_name="custom-vanilla-nerf",
         steps_per_eval_batch=200,
         steps_per_save=2000,
-        max_num_iterations=300000,
+        max_num_iterations=120000,
         mixed_precision=True,
+        steps_per_eval_all_images=1200000000,
         pipeline=VanillaPipelineConfig(
             datamanager=VanillaDataManagerConfig(
                 dataparser=BlenderDataParserConfig(),
                 train_num_rays_per_batch=512,
-                eval_num_rays_per_batch=128,
+                eval_num_rays_per_batch=64,
                 cache_images_type="uint8"
             ),
             model=CustomVanillaModelConfig(_target=CustomVanillaModel),
@@ -60,10 +62,12 @@ custom_vanilla_nerf = MethodSpecification(
 siren_nerf = MethodSpecification(
     config=TrainerConfig(
         method_name="siren-nerf",
+        experiment_name="siren-nerf",
         steps_per_eval_batch=200,
         steps_per_save=2000,
-        max_num_iterations=300000,
+        max_num_iterations=120000,
         mixed_precision=True,
+        steps_per_eval_all_images=130000000,
         pipeline=VanillaPipelineConfig(
             datamanager=VanillaDataManagerConfig(
                 dataparser=BlenderDataParserConfig(),
