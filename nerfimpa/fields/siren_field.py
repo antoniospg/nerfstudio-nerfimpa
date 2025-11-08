@@ -18,6 +18,7 @@ from typing import Dict, Optional, Tuple, Type
 
 import torch
 from torch import Tensor, nn
+from torch.nn.parameter import Parameter
 
 from nerfimpa.fields.custom_vanilla_field import CustomVanillaField
 
@@ -25,8 +26,25 @@ from nerfstudio.cameras.rays import RaySamples
 from nerfstudio.field_components.encodings import Encoding, Identity
 from nerfstudio.field_components.field_heads import DensityFieldHead, FieldHead, FieldHeadNames, RGBFieldHead
 from nerfstudio.field_components.mlp import MLP
+from nerfstudio.data.scene_box import SceneBox
 from nerfstudio.field_components.spatial_distortions import SpatialDistortion
 from nerfstudio.fields.base_field import Field
+
+from nerfstudio.field_components.activations import trunc_exp
+from nerfstudio.field_components.field_heads import FieldHead
+
+class TruncExpDensityFieldHead(FieldHead):
+    def __init__(self, in_dim: Optional[int] = None):
+        super().__init__(
+            in_dim=in_dim,
+            out_dim=1,
+            field_head_name=FieldHeadNames.DENSITY,
+            activation=None,  # we’ll apply trunc_exp in forward
+        )
+
+    def forward(self, x):
+        raw = super().forward(x)
+        return trunc_exp(raw)
 
 class SineLayer(nn.Module):
     def __init__(self, in_features, out_features, w0=30.0, is_first=True, bias=True):
@@ -48,7 +66,7 @@ class SineLayer(nn.Module):
                 bound = (6.0 / in_features) ** 0.5 / self.w0
             self.linear.weight.uniform_(-bound, bound)
             if self.linear.bias is not None:
-                self.linear.bias.uniform_(-bound, bound)
+                self.linear.bias.zero_()
 
 class SirenMLP(nn.Module):
     def __init__(
@@ -56,7 +74,7 @@ class SirenMLP(nn.Module):
         in_dim: int,
         num_layers: int,
         layer_width: int,
-        skip_connections: Tuple[int, ...] = (4,),
+        skip_connections: Tuple[int, ...] = (),
         w0_first: float = 30.0,
         w0_hidden: float = 1.0,
     ):
@@ -88,10 +106,8 @@ class SirenMLP(nn.Module):
         # No sine in the final layer
         final_layer = nn.Linear(current_in, layer_width)
         with torch.no_grad():
-            bound = (6.0 / current_in) ** 0.5 / w0_hidden
-            final_layer.weight.uniform_(-bound, bound)
-            if final_layer.bias is not None:
-                final_layer.bias.uniform_(-bound, bound)
+            nn.init.xavier_uniform_(final_layer.weight)
+            nn.init.zeros_(final_layer.bias)
 
         self.layers = layers
         self.final_layer = final_layer
@@ -133,6 +149,7 @@ class SirenField(CustomVanillaField):
 
     def __init__(
         self,
+        aabb:Tensor,
         position_encoding: Encoding = Identity(in_dim=3),
         direction_encoding: Encoding = Identity(in_dim=3),
         base_mlp_num_layers: int = 8,
@@ -143,35 +160,65 @@ class SirenField(CustomVanillaField):
         field_heads: Optional[Tuple[Type[FieldHead]]] = (RGBFieldHead,),
         use_integrated_encoding: bool = False,
         spatial_distortion: Optional[SpatialDistortion] = None,
+        w0: float = 10.0,
+        use_siren_color_head: bool = False
     ) -> None:
         super().__init__()
-
         self.position_encoding = position_encoding
         self.direction_encoding = direction_encoding
         self.use_integrated_encoding = use_integrated_encoding
         self.spatial_distortion = spatial_distortion
+
+        self.aabb = Parameter(aabb, requires_grad=False)
 
         self.mlp_base = SirenMLP(
             in_dim=self.position_encoding.get_out_dim(),
             num_layers=base_mlp_num_layers,
             layer_width=base_mlp_layer_width,
             skip_connections=skip_connections,
-            w0_first=30.0,
+            w0_first=w0,
             w0_hidden=1.0,
         )
 
         self.field_output_density = DensityFieldHead(in_dim=self.mlp_base.get_out_dim())
 
         if field_heads:
-            self.mlp_head = SirenMLP(
-                in_dim=self.mlp_base.get_out_dim() + self.direction_encoding.get_out_dim(),
-                num_layers=head_mlp_num_layers,
-                layer_width=head_mlp_layer_width,
-                skip_connections=(),
-                w0_first=30.0,
-                w0_hidden=1.0,
-            )
+            if use_siren_color_head:
+                self.mlp_head = SirenMLP(
+                    in_dim=self.mlp_base.get_out_dim() + self.direction_encoding.get_out_dim(),
+                    num_layers=head_mlp_num_layers,
+                    layer_width=head_mlp_layer_width,
+                    w0_first=w0,
+                    w0_hidden=1.0,
+                )
+            else:
+                self.mlp_head = MLP(
+                    in_dim=self.mlp_base.get_out_dim() + self.direction_encoding.get_out_dim(),
+                    num_layers=head_mlp_num_layers,
+                    layer_width=head_mlp_layer_width,
+                    out_activation=nn.SiLU(),
+                )
 
         self.field_heads = nn.ModuleList([field_head() for field_head in field_heads] if field_heads else [])  # type: ignore
         for field_head in self.field_heads:
             field_head.set_in_dim(self.mlp_head.get_out_dim())  # type: ignore
+
+    def get_density(self, ray_samples: RaySamples) -> Tuple[Tensor, Tensor]:
+        if self.use_integrated_encoding:
+            gaussian_samples = ray_samples.frustums.get_gaussian_blob()
+            if self.spatial_distortion is not None:
+                gaussian_samples = self.spatial_distortion(gaussian_samples)
+            encoded_xyz = self.position_encoding(gaussian_samples.mean, covs=gaussian_samples.cov)
+        else:
+            positions = ray_samples.frustums.get_positions()
+            if self.spatial_distortion is not None:
+                positions = self.spatial_distortion(positions)
+
+            positions = SceneBox.get_normalized_positions(positions, self.aabb)
+            positions = (positions * 2.0 - 1.0);
+            positions = positions.clamp(-1.0, 1.0)
+            encoded_xyz = self.position_encoding(positions)
+
+        base_mlp_out = self.mlp_base(encoded_xyz)
+        density = self.field_output_density(base_mlp_out)
+        return density, base_mlp_out

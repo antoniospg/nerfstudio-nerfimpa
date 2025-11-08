@@ -12,3 +12,12 @@ include = ["nerfimpa*"]
 [project.entry-points.'nerfstudio.method_configs']
 custom-vanilla-nerf = 'nerfimpa.nerfimpa_config:custom_vanilla_nerf'
 siren-nerf = 'nerfimpa.nerfimpa_config:siren_nerf'
+siren-nerf-nope = 'nerfimpa.nerfimpa_config:siren_nerf_nope'
+siren-nerf-w5 = 'nerfimpa.nerfimpa_config:siren_nerf_w5'
+siren-nerf-w20 = 'nerfimpa.nerfimpa_config:siren_nerf_w20'
+siren-nerf-sirencolor = 'nerfimpa.nerfimpa_config:siren_nerf_sirencolor'
+siren-nerf-lr1em4 = 'nerfimpa.nerfimpa_config:siren_nerf_lr1em4'
+siren-nerf-lw256 = 'nerfimpa.nerfimpa_config:siren_nerf_lw256'
+siren-nerf-nl5 = 'nerfimpa.nerfimpa_config:siren_nerf_nl5'
+siren-nerf-noclamp = 'nerfimpa.nerfimpa_config:siren_nerf_noclamp'
+siren-nerf-baseline2 = 'nerfimpa.nerfimpa_config:siren_nerf_baseline2'
