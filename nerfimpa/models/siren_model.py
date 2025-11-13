@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Tuple, Type
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type
 
 import torch
 from torch.nn import Parameter
@@ -29,7 +29,8 @@ class SirenModelConfig(CustomVanillaModelConfig):
     """Siren Model Config"""
 
     _target: Type = field(default_factory=lambda: SirenModel)
-    w0: float = 10.0
+    w0: Optional[float] = 10.0
+    w0_hidden: float = 1.0
     use_positional_encoding: bool = True
     use_directional_encoding: bool = True
     base_mlp_layer_width: int = 512
@@ -83,6 +84,7 @@ class SirenModel(CustomVanillaModel):
             base_mlp_layer_width=self.config.base_mlp_layer_width,
             head_mlp_layer_width=128,
             w0=self.config.w0,
+            w0_hidden=self.config.w0_hidden,
             use_siren_color_head=self.config.use_siren_color_head
         )
 
@@ -95,5 +97,6 @@ class SirenModel(CustomVanillaModel):
             base_mlp_layer_width=self.config.base_mlp_layer_width,
             head_mlp_layer_width=128,
             w0=self.config.w0,
+            w0_hidden=self.config.w0_hidden,
             use_siren_color_head=self.config.use_siren_color_head
         )

@@ -8,8 +8,8 @@ from nerfimpa.models.custom_vanilla_model import CustomVanillaModel
 from nerfimpa.models.custom_vanilla_model import CustomVanillaModelConfig
 from nerfimpa.fields.custom_vanilla_field import CustomVanillaField
 
-from nerfimpa.models.siren_model import SirenModel
-from nerfimpa.models.siren_model import SirenModelConfig
+from nerfimpa.models.siren_model import SirenModel, SirenModelConfig
+from nerfimpa.models.tuner_model import TunerModel, TunerModelConfig
 
 from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.data.dataparsers.blender_dataparser import BlenderDataParserConfig
@@ -365,6 +365,7 @@ siren_nerf_noclamp = MethodSpecification(
     ),
     description="Custom vanilla nerf",
 )
+
 siren_nerf_baseline2 = MethodSpecification(
     config=TrainerConfig(
         method_name="siren-nerf-baseline2",
@@ -384,6 +385,100 @@ siren_nerf_baseline2 = MethodSpecification(
                 _target=SirenModel,
                 eval_num_rays_per_chunk=1024,
                 w0=10
+                ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+            },
+        },
+    ),
+    description="Custom vanilla nerf",
+)
+
+siren_nerf_no_w0 = MethodSpecification(
+    config=TrainerConfig(
+        method_name="siren-nerf-no-w0",
+        experiment_name="siren-nerf-no-w0",
+        steps_per_eval_batch=200,
+        steps_per_save=2000,
+        max_num_iterations=20000,
+        mixed_precision=True,
+        steps_per_eval_all_images=130000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=BlenderDataParserConfig(),
+                train_num_rays_per_batch=1024,
+                eval_num_rays_per_batch=64,
+            ),
+            model=SirenModelConfig(
+                _target=SirenModel,
+                eval_num_rays_per_chunk=1024,
+                w0=None,
+                w0_hidden=1.0,
+                ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+            },
+        },
+    ),
+    description="Custom vanilla nerf",
+)
+
+siren_nerf_no_w0_hidden5 = MethodSpecification(
+    config=TrainerConfig(
+        method_name="siren-nerf-no-w0-hidden5",
+        experiment_name="siren-nerf-no-w0-hidden5",
+        steps_per_eval_batch=200,
+        steps_per_save=2000,
+        max_num_iterations=20000,
+        mixed_precision=True,
+        steps_per_eval_all_images=130000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=BlenderDataParserConfig(),
+                train_num_rays_per_batch=1024,
+                eval_num_rays_per_batch=64,
+            ),
+            model=SirenModelConfig(
+                _target=SirenModel,
+                eval_num_rays_per_chunk=1024,
+                w0=None,
+                w0_hidden=5.0,
+                ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+            },
+        },
+    ),
+    description="Custom vanilla nerf",
+)
+
+tuner_encoding = MethodSpecification(
+    config=TrainerConfig(
+        method_name="tuner-encoding",
+        experiment_name="tuner-encoding",
+        steps_per_eval_batch=200,
+        steps_per_save=2000,
+        max_num_iterations=20000,
+        mixed_precision=True,
+        steps_per_eval_all_images=130000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=BlenderDataParserConfig(),
+                train_num_rays_per_batch=1024,
+                eval_num_rays_per_batch=64,
+            ),
+            model=TunerModelConfig(
+                _target=TunerModel,
+                eval_num_rays_per_chunk=1024,
                 ),
         ),
         optimizers={
