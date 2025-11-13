@@ -1,6 +1,9 @@
-import torch
 import math
+import torch
 from torch import nn, Tensor
+
+from typing import Tuple
+
 from nerfstudio.field_components.encodings import Encoding
 
 def sample_high_int_freqs(m_high: int, d: int, B: int, b: int) -> torch.Tensor:
@@ -21,7 +24,7 @@ def sample_integer_frequencies(
     B: int,
     b: int,
     low_frac: float,
-) -> tuple[Tensor, Tensor, Tensor]:
+) -> Tuple[Tensor, Tensor, Tensor]:
     assert 0 < b <= B
     assert 0.0 < low_frac < 1.0
 
