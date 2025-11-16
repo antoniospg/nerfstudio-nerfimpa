@@ -25,7 +25,7 @@ def sample_integer_frequencies(
     b: int,
     low_frac: float,
 ) -> Tuple[Tensor, Tensor, Tensor]:
-    assert 0 < b <= B
+    assert 0 < b < B
     assert 0.0 < low_frac < 1.0
 
     m_low = max(1, int(round(low_frac * m)))
@@ -47,6 +47,7 @@ class TunerEncoding(Encoding):
         self,
         in_dim: int = 3,
         hidden_width: int = 256,
+        out_dim: int = 256,
         m: int = 128,
         B: int = 64,
         b: int = 21,
@@ -65,31 +66,35 @@ class TunerEncoding(Encoding):
             d=in_dim, m=m, B=B, b=b, low_frac=low_frac
         )
 
+        print(omega)
+
         self.register_buffer("omega", omega)
         self.register_buffer("phi", phi)
         self.register_buffer("is_low_mask", is_low)
         self.m = m
 
         self.hidden_width = hidden_width
-        self._out_dim = hidden_width
+        self._out_dim = out_dim
         self.reg_lambda = reg_lambda
 
         if learned_bounds:
             self.W_raw = nn.Parameter(torch.empty(hidden_width, m))
-            nn.init.normal_(self.W_raw, mean=0.0, std=0.33)
+            nn.init.normal_(self.W_raw, mean=0.0, std=0.1)
             c = torch.full((m,), float(c_high))
             c[is_low] = float(c_low)
             self.c = nn.Parameter(c)
             self._learned = True
         else:
             self.W = nn.Parameter(torch.empty(hidden_width, m))
-            nn.init.normal_(self.W_raw, mean=0.0, std=0.1)
+            nn.init.normal_(self.W, mean=0.0, std=0.1)
             cb = torch.full((m,), float(c_high))
             cb[is_low] = float(c_low)
             self.register_buffer("col_bounds", cb)
             self._learned = False
 
         self.b = nn.Parameter(torch.zeros(hidden_width))
+
+        self.final_linear = nn.Linear(hidden_width, self._out_dim)
 
 
     def forward(self, x: Tensor) -> Tensor:
@@ -102,7 +107,8 @@ class TunerEncoding(Encoding):
             W_eff = torch.clamp(self.W, -self.col_bounds, self.col_bounds)
 
         H = torch.sin(D @ W_eff.T + self.b)
-        encoded_inputs =  H.reshape(*x.shape[:-1], self._out_dim)
+        Z = self.final_linear(H)
+        encoded_inputs =  Z.reshape(*x.shape[:-1], self._out_dim)
 
         if self.include_input:
             return torch.cat([encoded_inputs, x], dim=-1)

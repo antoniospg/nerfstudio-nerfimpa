@@ -57,10 +57,15 @@ class TunerModel(CustomVanillaModel):
         """Set the fields and modules"""
         super().populate_modules()
 
+        # Desired bandwidth
+        B = 2 ** 7
+        b = 2 ** 3
+
         position_encoding = TunerEncoding(
             in_dim=3,
-            hidden_width=256,
-            m=128, B=64, b=21, low_frac=0.7,
+            hidden_width=128,
+            out_dim=256,
+            m=256, B=B, b=b, low_frac=0.7,
             learned_bounds=True, c_low=1.0, c_high=0.05, reg_lambda=0.05,
             include_input=True
         )

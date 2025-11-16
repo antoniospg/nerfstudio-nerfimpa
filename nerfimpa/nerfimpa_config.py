@@ -467,7 +467,7 @@ tuner_encoding = MethodSpecification(
         experiment_name="tuner-encoding",
         steps_per_eval_batch=200,
         steps_per_save=2000,
-        max_num_iterations=20000,
+        max_num_iterations=40000,
         mixed_precision=True,
         steps_per_eval_all_images=130000000,
         pipeline=VanillaPipelineConfig(
@@ -484,7 +484,7 @@ tuner_encoding = MethodSpecification(
         optimizers={
             "fields": {
                 "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
-                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+                "scheduler": None,
             },
         },
     ),

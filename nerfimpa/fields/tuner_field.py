@@ -102,9 +102,9 @@ class TunerField(CustomVanillaField):
             if self.spatial_distortion is not None:
                 positions = self.spatial_distortion(positions)
 
-            # Tuner coordinates should be in [0, 1]
             positions = SceneBox.get_normalized_positions(positions, self.aabb)
-            positions = positions.clamp(0.0, 1.0)
+            positions = (positions * 2.0 - 1.0);
+            positions = positions.clamp(-1.0, 1.0)
             encoded_xyz = self.position_encoding(positions)
 
         base_mlp_out = self.mlp_base(encoded_xyz)
