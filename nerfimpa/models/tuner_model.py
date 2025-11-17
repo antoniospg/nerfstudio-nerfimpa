@@ -11,6 +11,7 @@ from nerfimpa.models.custom_vanilla_model import CustomVanillaModelConfig
 
 from nerfimpa.fields.tuner_field import TunerField
 from nerfimpa.field_components.tuner_encoding import TunerEncoding
+from nerfimpa.utils.utils import to_gray, fft2_power_spectrum_gray, gray_to_rgb
 
 from nerfstudio.cameras.rays import RayBundle
 from nerfstudio.configs.config_utils import to_immutable_dict
@@ -64,9 +65,8 @@ class TunerModel(CustomVanillaModel):
         position_encoding = TunerEncoding(
             in_dim=3,
             hidden_width=128,
-            out_dim=256,
             m=256, B=B, b=b, low_frac=0.7,
-            learned_bounds=True, c_low=1.0, c_high=0.05, reg_lambda=0.05,
+            learned_bounds=False, c_low=1.0, c_high=0.05, reg_lambda=0.05,
             include_input=True
         )
         direction_encoding = NeRFEncoding(in_dim=3, num_frequencies=4, min_freq_exp=0.0, max_freq_exp=4.0, include_input=True)

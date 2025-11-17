@@ -47,7 +47,6 @@ class TunerEncoding(Encoding):
         self,
         in_dim: int = 3,
         hidden_width: int = 256,
-        out_dim: int = 256,
         m: int = 128,
         B: int = 64,
         b: int = 21,
@@ -66,15 +65,13 @@ class TunerEncoding(Encoding):
             d=in_dim, m=m, B=B, b=b, low_frac=low_frac
         )
 
-        print(omega)
-
         self.register_buffer("omega", omega)
         self.register_buffer("phi", phi)
         self.register_buffer("is_low_mask", is_low)
         self.m = m
 
         self.hidden_width = hidden_width
-        self._out_dim = out_dim
+        self._out_dim = hidden_width
         self.reg_lambda = reg_lambda
 
         if learned_bounds:
@@ -107,8 +104,21 @@ class TunerEncoding(Encoding):
             W_eff = torch.clamp(self.W, -self.col_bounds, self.col_bounds)
 
         H = torch.sin(D @ W_eff.T + self.b)
-        Z = self.final_linear(H)
-        encoded_inputs =  Z.reshape(*x.shape[:-1], self._out_dim)
+        encoded_inputs =  H.reshape(*x.shape[:-1], self._out_dim)
+
+        with torch.no_grad():
+           h_flat = H.detach().reshape(-1, H.shape[-1])
+
+           self.last_stats = {
+               # second sine stats
+               "H_mean": float(h_flat.mean()),
+               "H_std": float(h_flat.std()),
+               "H_min": float(h_flat.min()),
+               "H_max": float(h_flat.max()),
+               # fraction of units close to saturation
+               "H_frac_sat95": float((h_flat.abs() > 0.95).float().mean()),
+               "H_frac_sat99": float((h_flat.abs() > 0.99).float().mean()),
+           }
 
         if self.include_input:
             return torch.cat([encoded_inputs, x], dim=-1)

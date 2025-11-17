@@ -25,6 +25,7 @@ import torch
 from torch.nn import Parameter
 
 from nerfimpa.fields.custom_vanilla_field import CustomVanillaField
+from nerfimpa.utils.utils import to_gray, fft2_power_spectrum_gray, gray_to_rgb, laplacian_2d
 
 from nerfstudio.cameras.rays import RayBundle
 from nerfstudio.configs.config_utils import to_immutable_dict
@@ -239,9 +240,19 @@ class CustomVanillaModel(Model):
             far_plane=self.config.collider_params["far_plane"],
         )
 
-        combined_rgb = torch.cat([image, rgb_coarse, rgb_fine], dim=1)
+        combined_rgb = torch.cat([image, rgb_fine], dim=1)
         combined_acc = torch.cat([acc_coarse, acc_fine], dim=1)
         combined_depth = torch.cat([depth_coarse, depth_fine], dim=1)
+
+        # power spectrum
+        spec_pred = fft2_power_spectrum_gray(to_gray(rgb_fine))
+        spec_gt = fft2_power_spectrum_gray(to_gray(image))
+        spec_residual = fft2_power_spectrum_gray(to_gray(rgb_fine - image))
+        combined_spec = torch.cat([gray_to_rgb(spec_gt), gray_to_rgb(spec_pred), gray_to_rgb(spec_residual)], dim=1)
+
+        laplac_gt = gray_to_rgb(laplacian_2d(to_gray(image)))
+        laplac_pred = gray_to_rgb(laplacian_2d(to_gray(rgb_fine)))
+        combined_laplac = torch.cat([laplac_gt, laplac_pred], dim=1)
 
         # Switch images from [H, W, C] to [1, C, H, W] for metrics computations
         image = torch.moveaxis(image, -1, 0)[None, ...]
@@ -261,6 +272,5 @@ class CustomVanillaModel(Model):
             "fine_ssim": float(fine_ssim),
             "fine_lpips": float(fine_lpips),
         }
-        images_dict = {"img": combined_rgb, "accumulation": combined_acc, "depth": combined_depth}
+        images_dict = {"img": combined_rgb, "laplacian": combined_laplac, "spec": combined_spec}
         return metrics_dict, images_dict
-
