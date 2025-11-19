@@ -54,24 +54,27 @@ class SineLayer(nn.Module):
     def initialization_classic(self, in_features):
         with torch.no_grad():
             if self.is_first:
-                bound = self.w0 / in_features
+                bound = 1.0 / in_features
             else:
-                bound = (6.0 / in_features) ** 0.5
+                bound = (6.0 / in_features) ** 0.5 / self.w0
 
             self.linear.weight.uniform_(-bound, bound)
-            self.linear.bias.uniform_(-1.0/(in_features ** 0.5), 1.0/(in_features ** 0.5))
+            if self.linear.bias is not None:
+                self.linear.bias.uniform_(
+                    -1.0 / (in_features ** 0.5),
+                     1.0 / (in_features ** 0.5),
+                )
 
     def initialization_new(self, in_features):
-        print('hitting here')
         with torch.no_grad():
             if self.is_first:
-                bound = self.w0 / in_features
+                bound = 1.0 / in_features
             else:
-                bound = SIREN_CW / (in_features ** 0.5)
+                bound = (SIREN_CW / (in_features ** 0.5)) / self.w0
 
             self.linear.weight.uniform_(-bound, bound)
-            self.linear.bias.uniform_(-1.0/(in_features ** 0.5), 1.0/(in_features ** 0.5))
-            self.linear.bias.normal_(0, SIREN_CB ** 2)
+            if self.linear.bias is not None:
+                self.linear.bias.normal_(0, SIREN_CB)
 
 
     def init_weights(self, in_features):

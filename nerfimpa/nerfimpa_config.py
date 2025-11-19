@@ -417,7 +417,6 @@ siren_nerf_no_w0 = MethodSpecification(
                 eval_num_rays_per_chunk=1024,
                 w0=None,
                 w0_hidden=1.0,
-                new_initialization=True,
                 ),
         ),
         optimizers={
@@ -450,6 +449,141 @@ siren_nerf_no_w0_hidden5 = MethodSpecification(
                 eval_num_rays_per_chunk=1024,
                 w0=None,
                 w0_hidden=5.0,
+                ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+            },
+        },
+    ),
+    description="Custom vanilla nerf",
+)
+
+siren_nerf_no_w0_newinit4 = MethodSpecification(
+    config=TrainerConfig(
+        method_name="siren-nerf-no-w0-newinit4",
+        experiment_name="siren-nerf-no-w0-newinit4",
+        steps_per_eval_batch=200,
+        steps_per_save=2000,
+        max_num_iterations=20000,
+        mixed_precision=True,
+        steps_per_eval_all_images=130000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=BlenderDataParserConfig(),
+                train_num_rays_per_batch=1024,
+                eval_num_rays_per_batch=64,
+            ),
+            model=SirenModelConfig(
+                _target=SirenModel,
+                eval_num_rays_per_chunk=1024,
+                w0=None,
+                w0_hidden=1.0,
+                base_mlp_num_layers=4,
+                new_initialization=True,
+                ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+            },
+        },
+    ),
+    description="Custom vanilla nerf",
+)
+
+siren_nerf_no_w0_newinit5 = MethodSpecification(
+    config=TrainerConfig(
+        method_name="siren-nerf-no-w0-newinit5",
+        experiment_name="siren-nerf-no-w0-newinit5",
+        steps_per_eval_batch=200,
+        steps_per_save=2000,
+        max_num_iterations=20000,
+        mixed_precision=True,
+        steps_per_eval_all_images=130000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=BlenderDataParserConfig(),
+                train_num_rays_per_batch=1024,
+                eval_num_rays_per_batch=64,
+            ),
+            model=SirenModelConfig(
+                _target=SirenModel,
+                eval_num_rays_per_chunk=1024,
+                w0=None,
+                w0_hidden=1.0,
+                base_mlp_num_layers=5,
+                new_initialization=True,
+                ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+            },
+        },
+    ),
+    description="Custom vanilla nerf",
+)
+
+siren_nerf_no_w0_newinit6 = MethodSpecification(
+    config=TrainerConfig(
+        method_name="siren-nerf-no-w0-newinit6",
+        experiment_name="siren-nerf-no-w0-newinit6",
+        steps_per_eval_batch=200,
+        steps_per_save=2000,
+        max_num_iterations=20000,
+        mixed_precision=True,
+        steps_per_eval_all_images=130000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=BlenderDataParserConfig(),
+                train_num_rays_per_batch=1024,
+                eval_num_rays_per_batch=64,
+            ),
+            model=SirenModelConfig(
+                _target=SirenModel,
+                eval_num_rays_per_chunk=1024,
+                w0=None,
+                w0_hidden=1.0,
+                base_mlp_num_layers=6,
+                new_initialization=True,
+                ),
+        ),
+        optimizers={
+            "fields": {
+                "optimizer": RAdamOptimizerConfig(lr=5e-4, eps=1e-08),
+                "scheduler": ExponentialDecaySchedulerConfig(lr_final=5e-6, max_steps=40000),
+            },
+        },
+    ),
+    description="Custom vanilla nerf",
+)
+
+siren_nerf_no_w0_numlayers5 = MethodSpecification(
+    config=TrainerConfig(
+        method_name="siren-nerf-no-w0-numlayers5",
+        experiment_name="siren-nerf-no-w0-numlayers5",
+        steps_per_eval_batch=200,
+        steps_per_save=2000,
+        max_num_iterations=20000,
+        mixed_precision=True,
+        steps_per_eval_all_images=130000000,
+        pipeline=VanillaPipelineConfig(
+            datamanager=VanillaDataManagerConfig(
+                dataparser=BlenderDataParserConfig(),
+                train_num_rays_per_batch=1024,
+                eval_num_rays_per_batch=64,
+            ),
+            model=SirenModelConfig(
+                _target=SirenModel,
+                eval_num_rays_per_chunk=1024,
+                w0=None,
+                w0_hidden=1.0,
+                base_mlp_num_layers=5,
                 ),
         ),
         optimizers={

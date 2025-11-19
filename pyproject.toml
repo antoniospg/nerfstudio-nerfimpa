@@ -21,5 +21,13 @@ siren-nerf-lw256 = 'nerfimpa.nerfimpa_config:siren_nerf_lw256'
 siren-nerf-nl5 = 'nerfimpa.nerfimpa_config:siren_nerf_nl5'
 siren-nerf-noclamp = 'nerfimpa.nerfimpa_config:siren_nerf_noclamp'
 siren-nerf-baseline2 = 'nerfimpa.nerfimpa_config:siren_nerf_baseline2'
+
 siren-nerf-no-w0 = 'nerfimpa.nerfimpa_config:siren_nerf_no_w0'
-siren-nerf-no-w0-hidden5 = 'nerfimpa.nerfimpa_config:tuner_encoding'
+siren-nerf-no-w0-hidden5 = 'nerfimpa.nerfimpa_config:siren_nerf_no_w0_hidden5'
+
+tuner-encoding = 'nerfimpa.nerfimpa_config:tuner_encoding'
+
+siren-nerf-no-w0-newinit4 = 'nerfimpa.nerfimpa_config:siren_nerf_no_w0_newinit4'
+siren-nerf-no-w0-newinit5 = 'nerfimpa.nerfimpa_config:siren_nerf_no_w0_newinit5'
+siren-nerf-no-w0-newinit6 = 'nerfimpa.nerfimpa_config:siren_nerf_no_w0_newinit6'
+siren-nerf-no-w0-numlayers5 = 'nerfimpa.nerfimpa_config:siren_nerf_no_w0_numlayers5'
