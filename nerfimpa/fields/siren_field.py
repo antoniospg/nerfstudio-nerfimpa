@@ -16,6 +16,8 @@
 
 from typing import Dict, Optional, Tuple, Type
 
+from math import exp
+
 import torch
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
@@ -33,27 +35,50 @@ from nerfstudio.fields.base_field import Field
 from nerfstudio.field_components.activations import trunc_exp
 from nerfstudio.field_components.field_heads import FieldHead
 
+SIREN_CW = (6.0 / (1 + exp(-2))) ** 0.5
+SIREN_CB = (1.0 / (3 ** 0.5)) * SIREN_CW * exp(-1)
+
 class SineLayer(nn.Module):
-    def __init__(self, in_features, out_features, w0=30.0, is_first=True, bias=True):
+    def __init__(self, in_features, out_features, w0=30.0, is_first=True, bias=True, new_initialization=False):
         # sin(w0 * (W * x + b))
         super().__init__()
         self.w0 = w0
         self.is_first = is_first
+        self.new_initialization = new_initialization
         self.linear = nn.Linear(in_features, out_features, bias=bias)
         self.init_weights(in_features)
 
     def forward(self, x):
         return torch.sin(self.w0 * self.linear(x))
 
-    def init_weights(self, in_features):
+    def initialization_classic(self, in_features):
         with torch.no_grad():
             if self.is_first:
-                bound = 1.0 / in_features
+                bound = self.w0 / in_features
             else:
-                bound = (6.0 / in_features) ** 0.5 / self.w0
+                bound = (6.0 / in_features) ** 0.5
+
             self.linear.weight.uniform_(-bound, bound)
-            if self.linear.bias is not None:
-                self.linear.bias.zero_()
+            self.linear.bias.uniform_(-1.0/(in_features ** 0.5), 1.0/(in_features ** 0.5))
+
+    def initialization_new(self, in_features):
+        print('hitting here')
+        with torch.no_grad():
+            if self.is_first:
+                bound = self.w0 / in_features
+            else:
+                bound = SIREN_CW / (in_features ** 0.5)
+
+            self.linear.weight.uniform_(-bound, bound)
+            self.linear.bias.uniform_(-1.0/(in_features ** 0.5), 1.0/(in_features ** 0.5))
+            self.linear.bias.normal_(0, SIREN_CB ** 2)
+
+
+    def init_weights(self, in_features):
+        if self.new_initialization:
+            self.initialization_new(in_features)
+        else:
+           self.initialization_classic(in_features)
 
 class SirenMLP(nn.Module):
     def __init__(
@@ -64,6 +89,7 @@ class SirenMLP(nn.Module):
         skip_connections: Tuple[int, ...] = (),
         w0_first: Optional[float] = 30.0,
         w0_hidden: float = 1.0,
+        new_initialization: bool = False,
     ):
         super().__init__()
         self.in_dim = in_dim
@@ -85,6 +111,7 @@ class SirenMLP(nn.Module):
                     out_features=layer_width,
                     w0=(w0_first if is_first else w0_hidden),
                     is_first=is_first,
+                    new_initialization=new_initialization,
                 )
             )
 
@@ -149,7 +176,8 @@ class SirenField(CustomVanillaField):
         spatial_distortion: Optional[SpatialDistortion] = None,
         w0: Optional[float] = 10.0,
         w0_hidden: float = 1.0,
-        use_siren_color_head: bool = False
+        use_siren_color_head: bool = False,
+        new_initialization: bool = False,
     ) -> None:
         super().__init__()
         self.position_encoding = position_encoding
@@ -166,6 +194,7 @@ class SirenField(CustomVanillaField):
             skip_connections=skip_connections,
             w0_first=w0,
             w0_hidden=w0_hidden,
+            new_initialization=new_initialization,
         )
 
         self.field_output_density = DensityFieldHead(in_dim=self.mlp_base.get_out_dim())
@@ -178,6 +207,7 @@ class SirenField(CustomVanillaField):
                     layer_width=head_mlp_layer_width,
                     w0_first=w0,
                     w0_hidden=w0_hidden,
+                    new_initialization=new_initialization,
                 )
             else:
                 self.mlp_head = MLP(

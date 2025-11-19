@@ -417,6 +417,7 @@ siren_nerf_no_w0 = MethodSpecification(
                 eval_num_rays_per_chunk=1024,
                 w0=None,
                 w0_hidden=1.0,
+                new_initialization=True,
                 ),
         ),
         optimizers={

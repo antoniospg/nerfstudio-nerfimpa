@@ -36,6 +36,7 @@ class SirenModelConfig(CustomVanillaModelConfig):
     base_mlp_layer_width: int = 512
     base_mlp_num_layers: int = 4
     use_siren_color_head: bool = False
+    new_initialization: bool = False
 
 
 class SirenModel(CustomVanillaModel):
@@ -85,7 +86,8 @@ class SirenModel(CustomVanillaModel):
             head_mlp_layer_width=128,
             w0=self.config.w0,
             w0_hidden=self.config.w0_hidden,
-            use_siren_color_head=self.config.use_siren_color_head
+            use_siren_color_head=self.config.use_siren_color_head,
+            new_initialization=self.config.new_initialization
         )
 
         self.field_fine = SirenField(
@@ -98,5 +100,6 @@ class SirenModel(CustomVanillaModel):
             head_mlp_layer_width=128,
             w0=self.config.w0,
             w0_hidden=self.config.w0_hidden,
-            use_siren_color_head=self.config.use_siren_color_head
+            use_siren_color_head=self.config.use_siren_color_head,
+            new_initialization=self.config.new_initialization
         )
