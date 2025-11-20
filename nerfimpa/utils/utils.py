@@ -33,6 +33,21 @@ def fft2_power_spectrum_gray(gray: torch.Tensor) -> torch.Tensor:
 
     return spec
 
+def add_gray_overlay(spec: torch.Tensor,
+                     gray_level: float = 0.5,
+                     alpha: float = 0.7) -> torch.Tensor:
+    """
+    spec: [H,W] in [0,1]
+    gray_level: background gray (0=black, 1=white)
+    alpha: how much of spec vs background (1=only spec, 0=only gray)
+
+    Returns [H,W] in [0,1] with a gray overlay, so 0 isn't pure black anymore.
+    """
+    bg = torch.full_like(spec, gray_level)
+
+    out = (1.0 - alpha) * bg + alpha * spec
+    return out.clamp(0.0, 1.0)
+
 
 def gray_to_rgb(gray: torch.Tensor) -> torch.Tensor:
     return gray.unsqueeze(-1).repeat(1, 1, 3)

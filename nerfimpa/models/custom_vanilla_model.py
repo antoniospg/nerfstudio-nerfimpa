@@ -25,7 +25,7 @@ import torch
 from torch.nn import Parameter
 
 from nerfimpa.fields.custom_vanilla_field import CustomVanillaField
-from nerfimpa.utils.utils import to_gray, fft2_power_spectrum_gray, gray_to_rgb, laplacian_2d
+from nerfimpa.utils.utils import to_gray, fft2_power_spectrum_gray, gray_to_rgb, laplacian_2d, add_gray_overlay
 
 from nerfstudio.cameras.rays import RayBundle
 from nerfstudio.configs.config_utils import to_immutable_dict
@@ -250,8 +250,8 @@ class CustomVanillaModel(Model):
         spec_residual = fft2_power_spectrum_gray(to_gray(rgb_fine - image))
         combined_spec = torch.cat([gray_to_rgb(spec_gt), gray_to_rgb(spec_pred), gray_to_rgb(spec_residual)], dim=1)
 
-        laplac_gt = gray_to_rgb(laplacian_2d(to_gray(image)))
-        laplac_pred = gray_to_rgb(laplacian_2d(to_gray(rgb_fine)))
+        laplac_gt = gray_to_rgb(add_gray_overlay(laplacian_2d(to_gray(image))))
+        laplac_pred = gray_to_rgb(add_gray_overlay(laplacian_2d(to_gray(rgb_fine))))
         combined_laplac = torch.cat([laplac_gt, laplac_pred], dim=1)
 
         # Switch images from [H, W, C] to [1, C, H, W] for metrics computations
