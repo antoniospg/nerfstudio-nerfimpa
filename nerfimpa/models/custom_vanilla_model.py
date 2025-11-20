@@ -247,8 +247,7 @@ class CustomVanillaModel(Model):
         # power spectrum
         spec_pred = fft2_power_spectrum_gray(to_gray(rgb_fine))
         spec_gt = fft2_power_spectrum_gray(to_gray(image))
-        spec_residual = fft2_power_spectrum_gray(to_gray(rgb_fine - image))
-        combined_spec = torch.cat([gray_to_rgb(spec_gt), gray_to_rgb(spec_pred), gray_to_rgb(spec_residual)], dim=1)
+        combined_spec = torch.cat([gray_to_rgb(spec_gt), gray_to_rgb(spec_pred)], dim=1)
 
         laplac_gt = gray_to_rgb(add_gray_overlay(laplacian_2d(to_gray(image))))
         laplac_pred = gray_to_rgb(add_gray_overlay(laplacian_2d(to_gray(rgb_fine))))

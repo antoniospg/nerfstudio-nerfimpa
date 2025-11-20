@@ -33,7 +33,7 @@ class SirenModelConfig(CustomVanillaModelConfig):
     w0_hidden: float = 1.0
     use_positional_encoding: bool = True
     use_directional_encoding: bool = True
-    base_mlp_layer_width: int = 512
+    base_mlp_layer_width: int = 256
     base_mlp_num_layers: int = 4
     use_siren_color_head: bool = False
     new_initialization: bool = False

@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn.functional as F
 
@@ -27,11 +29,14 @@ def fft2_power_spectrum_gray(gray: torch.Tensor) -> torch.Tensor:
 
     P_log = torch.log1p(P)  # log(1 + P) to avoid log(0)
 
-    P_min = P_log.min()
-    P_max = P_log.max()
-    spec = (P_log - P_min) / (P_max - P_min + 1e-8)
+    H, W = P_log.shape[-2], P_log.shape[-1]
+    max_mag_theoretical = H * W
 
-    return spec
+    max_log_mag = math.log1p(max_mag_theoretical) * 2
+
+    spec_norm = (P_log / max_log_mag).clamp(0.0, 1.0)
+
+    return spec_norm
 
 def add_gray_overlay(spec: torch.Tensor,
                      gray_level: float = 0.5,
@@ -75,7 +80,4 @@ def laplacian_2d(img: torch.Tensor) -> torch.Tensor:
     lap = F.conv2d(img_bchw, kernel, padding=1)  # [1,1,H,W]
     lap = lap.squeeze(0).squeeze(0)              # [H,W]
 
-    lap_abs  = lap.abs()
-    lap_norm = (lap_abs - lap_abs.min()) / (lap_abs.max() - lap_abs.min() + 1e-8)
-
-    return lap_norm
+    return lap
